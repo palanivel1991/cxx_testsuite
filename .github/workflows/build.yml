@@ -1,0 +1,31 @@
+name: Build and Test Using Python Script
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use a Linux environment
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3  # Clone the repository into the runner
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x  # Use the latest Python 3 version
+
+      - name: Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc g++ make
+
+      - name: Run Python Script to Compile
+        run: |
+          python compile_code.py  # Execute the Python script
