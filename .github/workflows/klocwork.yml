@@ -1,47 +1,36 @@
-name: Run Klocwork Local Analysis (kwcheck)
+name: Run Klocwork Local Analysis
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-kwcheck-local:
+  analysis:
     runs-on: self-hosted
+    env:
+      KLOCWORK_LTOKEN: C:\Users\palan\.klocwork\ltoken
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Copy ltoken file
-        run: |
-          $src = "C:\Users\palan\.klocwork\ltoken"
-          $destDir = "$Env:USERPROFILE\.klocwork"
-          New-Item -ItemType Directory -Force -Path $destDir
-          Copy-Item -Path $src -Destination $destDir -Force
+      - name: Clean workspace contents
         shell: powershell
-
-      - name: Clean working directory contents
         run: |
           $dir = "$PWD"
-          Write-Host "Cleaning contents of: $dir"
           Get-ChildItem -Path $dir -Recurse -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        shell: powershell
 
-      - name: Run kwinject
-        run: |
-          D:\kw_cmd_24.4\bin\kwinject make
+      - name: Generate build spec
         shell: powershell
+        run: D:\kw_cmd_24.4\bin\kwinject make
 
-      - name: Set Klocwork license
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
+      - name: Set license server
         shell: powershell
+        run: D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
 
-      - name: Run kwcheck create
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck create
+      - name: Initialize local project
         shell: powershell
+        run: D:\kw_cmd_24.4\bin\kwcheck create
 
-      - name: Run kwcheck analysis
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
+      - name: Run Klocwork analysis
         shell: powershell
+        run: D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
