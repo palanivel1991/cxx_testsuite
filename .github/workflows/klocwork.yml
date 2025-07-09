@@ -1,4 +1,4 @@
-name: Run Klocwork kwcheck CLI (No Login Needed)
+name: Run Klocwork Local Analysis (Clean & Create)
 
 on:
   workflow_dispatch:
@@ -8,19 +8,26 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout your repo
+      - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Create .ltoken file with token
+      - name: Clean existing .kwlp and .kwps folders
         run: |
-          $token = "d255d588c7e9959b28761db8d5ff4a87b04e01f8eec411a745540ac732c24530"
-          $ltokenEntry = "192.168.0.127;8082;admin;$token"
-          $ltokenPath = "$Env:USERPROFILE\.klocwork\ltoken"
-          New-Item -Path $(Split-Path $ltokenPath) -ItemType Directory -Force
-          Set-Content -Path $ltokenPath -Value $ltokenEntry
+          if (Test-Path ".kwlp") { Remove-Item ".kwlp" -Recurse -Force }
+          if (Test-Path ".kwps") { Remove-Item ".kwps" -Recurse -Force }
 
-      - name: Run Klocwork kwcheck
+      - name: Create Klocwork project
+        run: |
+          D:\kw_cmd_24.4\bin\kwcheck create
+
+      - name: Set License Info
+        run: |
+          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
+
+      - name: Run kwinject to capture build spec
         run: |
           D:\kw_cmd_24.4\bin\kwinject make
-          D:\kw_cmd_24.4\bin\kwcheck create --url http://192.168.0.127:8082/Demo --project-dir kwps
-          D:\kw_cmd_24.4\bin\kwcheck run --url http://192.168.0.127:8082/Demo --project-dir kwps
+
+      - name: Run Klocwork local analysis
+        run: |
+          D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
