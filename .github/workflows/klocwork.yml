@@ -1,36 +1,47 @@
-name: Run Klocwork Local Analysis using ltoken
+name: Run Klocwork Local Analysis (kwcheck)
 
 on:
   workflow_dispatch:
 
 jobs:
-  klocwork-analysis:
+  run-kwcheck-local:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout repo
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Clean and prepare workspace
+      - name: Copy ltoken file
         run: |
-          $dir = "D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite"
-          if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
-          New-Item -ItemType Directory -Force -Path $dir
+          $src = "C:\Users\palan\.klocwork\ltoken"
+          $destDir = "$Env:USERPROFILE\.klocwork"
+          New-Item -ItemType Directory -Force -Path $destDir
+          Copy-Item -Path $src -Destination $destDir -Force
         shell: powershell
 
-      - name: Copy existing ltoken file
+      - name: Clean working directory contents
         run: |
-          $source = "C:\Users\palan\.klocwork\ltoken"
-          $target = "$Env:USERPROFILE\.klocwork\ltoken"
-          New-Item -ItemType Directory -Force -Path (Split-Path $target)
-          Copy-Item $source $target -Force
+          $dir = "$PWD"
+          Write-Host "Cleaning contents of: $dir"
+          Get-ChildItem -Path $dir -Recurse -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
         shell: powershell
 
-      - name: Run Klocwork analysis
+      - name: Run kwinject
         run: |
-          cd D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite
-          D:\kw_cmd_24.4\bin\kwcheck create
-          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
           D:\kw_cmd_24.4\bin\kwinject make
+        shell: powershell
+
+      - name: Set Klocwork license
+        run: |
+          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
+        shell: powershell
+
+      - name: Run kwcheck create
+        run: |
+          D:\kw_cmd_24.4\bin\kwcheck create
+        shell: powershell
+
+      - name: Run kwcheck analysis
+        run: |
           D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
         shell: powershell
