@@ -1,47 +1,36 @@
-name: Run Klocwork Local Analysis (No URL)
+name: Run Klocwork Local Analysis using ltoken
 
 on:
   workflow_dispatch:
 
 jobs:
-  klocwork-local-analysis:
+  klocwork-analysis:
     runs-on: self-hosted
 
     steps:
-      - name: Set working directory
-        run: |
-          cd D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite
-        shell: powershell
-
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Clean existing Klocwork project files
+      - name: Clean and prepare workspace
         run: |
-          $path = "D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite"
-          Remove-Item "$path\.kwlp" -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item "$path\.kwps" -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item "$path\kwinject.out" -Force -ErrorAction SilentlyContinue
+          $dir = "D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite"
+          if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
+          New-Item -ItemType Directory -Force -Path $dir
         shell: powershell
 
-      - name: Create local Klocwork project
+      - name: Copy existing ltoken file
+        run: |
+          $source = "C:\Users\palan\.klocwork\ltoken"
+          $target = "$Env:USERPROFILE\.klocwork\ltoken"
+          New-Item -ItemType Directory -Force -Path (Split-Path $target)
+          Copy-Item $source $target -Force
+        shell: powershell
+
+      - name: Run Klocwork analysis
         run: |
           cd D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite
           D:\kw_cmd_24.4\bin\kwcheck create
-        shell: powershell
-
-      - name: Set Klocwork license server
-        run: |
           D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
-        shell: powershell
-
-      - name: Inject build using kwinject
-        run: |
-          cd D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite
           D:\kw_cmd_24.4\bin\kwinject make
-        shell: powershell
-
-      - name: Run Klocwork local analysis
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck run -b D:\support_cases\softdel-klocwork\actions-runner\_work\cxx_testsuite\cxx_testsuite\kwinject.out
+          D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
         shell: powershell
