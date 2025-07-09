@@ -1,4 +1,4 @@
-name: Run Klocwork Local Analysis (Clean & Create)
+name: Klocwork Local Analysis (Clean & Create)
 
 on:
   workflow_dispatch:
@@ -8,27 +8,27 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout source
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Delete existing .kwlp and .kwps folders
+      - name: Clean up existing state
         shell: powershell
         run: |
           if (Test-Path ".kwlp") { Remove-Item ".kwlp" -Recurse -Force }
           if (Test-Path ".kwps") { Remove-Item ".kwps" -Recurse -Force }
 
-      - name: Create local Klocwork project
+      - name: Step 1 – Create local Klocwork project
         run: |
           D:\kw_cmd_24.4\bin\kwcheck create
 
-      - name: Set license host and port
+      - name: Step 2 – Set license host and port
         run: |
           D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
 
-      - name: Run kwinject to generate build spec
+      - name: Step 3 – Run kwinject to generate build spec
         run: |
           D:\kw_cmd_24.4\bin\kwinject make
 
-      - name: Run local analysis
+      - name: Step 4 – Run Klocwork analysis locally
         run: |
           D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
