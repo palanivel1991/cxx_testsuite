@@ -8,31 +8,24 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout source code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clean up existing state
+      - name: Clean up existing kwlp/kwps
         shell: powershell
         run: |
           if (Test-Path ".kwlp") { Remove-Item ".kwlp" -Recurse -Force }
           if (Test-Path ".kwps") { Remove-Item ".kwps" -Recurse -Force }
+          if (Test-Path "kwinject.out") { Remove-Item "kwinject.out" -Force }
 
-      - name: Step 1 – Create local Klocwork project
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck create
+      - name: Step 1 – Create local project
+        run: D:\kw_cmd_24.4\bin\kwcheck create
 
-      - name: Step 2 – Set license host and port
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
+      - name: Step 2 – Set license server
+        run: D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
 
       - name: Step 3 – Run kwinject to generate build spec
-        run: |
-          D:\kw_cmd_24.4\bin\kwinject make
+        run: D:\kw_cmd_24.4\bin\kwinject make
 
-      - name: Step 3.5 – Reconfirm license settings
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
-
-      - name: Step 4 – Run Klocwork analysis locally
-        run: |
-          D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
+      - name: Step 4 – Run kwcheck analysis
+        run: D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
