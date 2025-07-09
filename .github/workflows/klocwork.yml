@@ -29,6 +29,10 @@ jobs:
         run: |
           D:\kw_cmd_24.4\bin\kwinject make
 
+      - name: Step 3.5 – Reconfirm license settings
+        run: |
+          D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
+
       - name: Step 4 – Run Klocwork analysis locally
         run: |
           D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
