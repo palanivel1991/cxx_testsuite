@@ -4,30 +4,31 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-kwcheck:
+  klocwork-analysis:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Clean existing .kwlp and .kwps folders
+      - name: Delete existing .kwlp and .kwps folders
+        shell: powershell
         run: |
           if (Test-Path ".kwlp") { Remove-Item ".kwlp" -Recurse -Force }
           if (Test-Path ".kwps") { Remove-Item ".kwps" -Recurse -Force }
 
-      - name: Create Klocwork project
+      - name: Create local Klocwork project
         run: |
           D:\kw_cmd_24.4\bin\kwcheck create
 
-      - name: Set License Info
+      - name: Set license host and port
         run: |
           D:\kw_cmd_24.4\bin\kwcheck set license.host=192.168.0.127 license.port=8082
 
-      - name: Run kwinject to capture build spec
+      - name: Run kwinject to generate build spec
         run: |
           D:\kw_cmd_24.4\bin\kwinject make
 
-      - name: Run Klocwork local analysis
+      - name: Run local analysis
         run: |
           D:\kw_cmd_24.4\bin\kwcheck run -b kwinject.out
