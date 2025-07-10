@@ -46,7 +46,7 @@ jobs:
         shell: cmd
         run: |
           set KWAUTH_NONINTERACTIVE=true
-          "%KLOCWORK_BIN%\kwauth.exe" --url "%KW_URL%"
+          "%KLOCWORK_BIN%\kwauth.exe" --url "%KW_URL%" --user "%KW_USER%" --password "%KW_PASS%"
 
       - name: Run Klocwork CLI analysis
         shell: cmd
@@ -64,12 +64,14 @@ jobs:
           if exist %KW_REPORT_DIR% rmdir /s /q %KW_REPORT_DIR%
 
           echo Starting build with kwinject...
-        
+          mkdir Build
+          cd Build
+
           cmake ..
-          "%KLOCWORK_BIN%\kwinject.exe" -- make
+          "%KLOCWORK_BIN%\kwinject.exe" -- nmake
 
           echo Running Klocwork static analysis...
-          set KLOCWORK_LTOKEN=C:\Users\palan\.klocwork\ltoken
+          set KLOCWORK_LTOKEN=%KLOCWORK_LTOKEN%
           cd /d %GITHUB_WORKSPACE%
 
           "%KLOCWORK_BIN%\kwcheck.exe" create --url "%KW_URL%" --project "%KW_PROJECT%"
