@@ -53,7 +53,12 @@ jobs:
         run: |
           set PATH=%PATH%;%KLOCWORK_BIN%
           echo 🔐 Authenticating with Klocwork using kwauth...
-          "%KLOCWORK_BIN%\kwauth.exe" --url %KW_URL% --user %KW_USER% --password %KW_PASS% --insecure
+          
+          (
+            echo %KW_USER%
+            echo %KW_PASS%
+          ) | "%KLOCWORK_BIN%\kwauth.exe" --url %KW_URL% --insecure
+
           if exist "%USERPROFILE%\.klocwork\ltoken" (
             echo ✅ ltoken generated successfully.
           ) else (
