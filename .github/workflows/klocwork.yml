@@ -48,23 +48,27 @@ jobs:
           )
           echo ✅ Secrets are set. Proceeding...
 
-      - name: Authenticate with Klocwork (generate .ltoken)
+      - name: Authenticate with Klocwork using .kwauth
         shell: cmd
         run: |
-          set PATH=%PATH%;%KLOCWORK_BIN%
-          echo 🔐 Authenticating with Klocwork using kwauth...
-          
-          (
-            echo %KW_USER%
-            echo %KW_PASS%
-          ) | "%KLOCWORK_BIN%\kwauth.exe" --url %KW_URL% --insecure
+          setlocal EnableDelayedExpansion
+          set KWAUTH_DIR=%USERPROFILE%\.klocwork
 
-          if exist "%USERPROFILE%\.klocwork\ltoken" (
-            echo ✅ ltoken generated successfully.
-          ) else (
-            echo ❌ Failed to generate ltoken.
-            exit /b 1
-          )
+          echo 🔐 Creating .kwauth for non-interactive login...
+          if exist "!KWAUTH_DIR!" rmdir /s /q "!KWAUTH_DIR!"
+          mkdir "!KWAUTH_DIR!"
+
+          > "!KWAUTH_DIR!\.kwauth" echo {
+          >> "!KWAUTH_DIR!\.kwauth" echo   "users": [
+          >> "!KWAUTH_DIR!\.kwauth" echo     {
+          >> "!KWAUTH_DIR!\.kwauth" echo       "url": "%KW_URL%",
+          >> "!KWAUTH_DIR!\.kwauth" echo       "user": "%KW_USER%",
+          >> "!KWAUTH_DIR!\.kwauth" echo       "password": "%KW_PASS%"
+          >> "!KWAUTH_DIR!\.kwauth" echo     }
+          >> "!KWAUTH_DIR!\.kwauth" echo   ]
+          >> "!KWAUTH_DIR!\.kwauth" echo }
+
+          echo ✅ .kwauth file created at !KWAUTH_DIR!\.kwauth
 
       - name: Clean previous Klocwork state
         shell: cmd
