@@ -1,4 +1,4 @@
-name: Build and Test BACnet Stack
+name: Build and Test BACnet Stack (Windows)
 
 on:      
   pull_request:
@@ -12,7 +12,7 @@ jobs:
   klocwork:
     runs-on: self-hosted
 
-    name: Run Klocwork Analysis
+    name: Run Klocwork Analysis on Windows
 
     env:
       KW_URL: http://192.168.0.127:8082
@@ -21,7 +21,6 @@ jobs:
       KW_PASS: ${{ secrets.KW_PASS }}
       KW_REPORT_NAME: cxx_testsuite_report
       KW_REPORT_DIR: reports
-      KLOCWORK_LTOKEN: C:\Users\palan\.klocwork\ltoken
       KLOCWORK_BIN: D:\kw_cmd_24.4\bin
 
     steps:
@@ -49,12 +48,18 @@ jobs:
           )
           echo ✅ Secrets are set. Proceeding...
 
-      - name: Authenticate with Klocwork using kwauth
+      - name: Authenticate with Klocwork (generate .ltoken)
         shell: cmd
         run: |
           set PATH=%PATH%;%KLOCWORK_BIN%
-          echo 🔐 Authenticating with Klocwork...
-          "%KLOCWORK_BIN%\kwauth.exe" --url %KW_URL% --user %KW_USER% --password %KW_PASS%
+          echo 🔐 Authenticating with Klocwork using kwauth...
+          "%KLOCWORK_BIN%\kwauth.exe" --url %KW_URL% --user %KW_USER% --password %KW_PASS% --insecure
+          if exist "%USERPROFILE%\.klocwork\ltoken" (
+            echo ✅ ltoken generated successfully.
+          ) else (
+            echo ❌ Failed to generate ltoken.
+            exit /b 1
+          )
 
       - name: Clean previous Klocwork state
         shell: cmd
@@ -68,7 +73,7 @@ jobs:
           set PATH=%PATH%;%KLOCWORK_BIN%
           cd /d %GITHUB_WORKSPACE%
 
-          echo 🧹 Cleaning previous build...
+          echo Cleaning previous build...
           if exist .kwlp rmdir /s /q .kwlp
           if exist .kwps rmdir /s /q .kwps
           if exist Build rmdir /s /q Build
@@ -77,13 +82,13 @@ jobs:
           if exist %KW_REPORT_NAME%.pdf del /f /q %KW_REPORT_NAME%.pdf
           if exist %KW_REPORT_DIR% rmdir /s /q %KW_REPORT_DIR%
 
-          echo 🏗️ Starting build with kwinject...
+          echo Starting build with kwinject...
           mkdir Build
           cd Build
           cmake ..
           "%KLOCWORK_BIN%\kwinject.exe" make
 
-          echo 🔍 Running Klocwork static analysis...
+          echo Running Klocwork static analysis...
           cd /d %GITHUB_WORKSPACE%
           "%KLOCWORK_BIN%\kwcheck.exe" create --url %KW_URL%/%KW_PROJECT%
           "%KLOCWORK_BIN%\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
