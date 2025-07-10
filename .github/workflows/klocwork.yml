@@ -1,4 +1,4 @@
-name: Build and Test BACnet Stack (Windows)
+name: Build and Test BACnet Stack
 
 on:      
   pull_request:
@@ -12,13 +12,14 @@ jobs:
   klocwork:
     runs-on: self-hosted
 
-    name: Run Klocwork Analysis on Windows
+    name: Run Klocwork Analysis
 
     env:
+      KLOCWORK_LTOKEN: C:\Users\palan\.klocwork\ltoken
       KW_URL: http://192.168.0.127:8082
-      KW_PROJECT: Demo
-      KW_USER: ${{ secrets.KW_USER }}
-      KW_PASS: ${{ secrets.KW_PASS }}
+      KW_PROJECT: cxx_testsuite
+      KW_USER: admin
+      KW_PASS: meteonic12
       KW_REPORT_NAME: cxx_testsuite_report
       KW_REPORT_DIR: reports
       KLOCWORK_BIN: D:\kw_cmd_24.4\bin
@@ -35,53 +36,22 @@ jobs:
         shell: cmd
         run: curl.exe -v %KW_URL%
 
-      - name: Validate required secrets
-        shell: cmd
-        run: |
-          if "%KW_USER%"=="" (
-            echo ❌ KW_USER is empty. Check GitHub Secrets configuration.
-            exit /b 1
-          )
-          if "%KW_PASS%"=="" (
-            echo ❌ KW_PASS is empty. Check GitHub Secrets configuration.
-            exit /b 1
-          )
-          echo ✅ Secrets are set. Proceeding...
-
-      - name: Setup .kwauth file for Klocwork auth
-        shell: powershell
-        run: |
-          $kwauthPath = "$env:USERPROFILE\.klocwork\.kwauth"
-          $kwauthDir = [System.IO.Path]::GetDirectoryName($kwauthPath)
-
-          if (Test-Path $kwauthDir) {
-              Remove-Item -Path $kwauthDir -Recurse -Force
-          }
-          New-Item -ItemType Directory -Path $kwauthDir | Out-Null
-
-          $json = @{
-              users = @(
-                  @{
-                      url = "$env:KW_URL"
-                      user = "$env:KW_USER"
-                      password = "$env:KW_PASS"
-                  }
-              )
-          } | ConvertTo-Json -Depth 3
-
-          $json | Set-Content -Path $kwauthPath -Encoding UTF8
-          Write-Host "✅ .kwauth file created at $kwauthPath"
-
       - name: Clean previous Klocwork state
         shell: cmd
         run: |
           if exist "%GITHUB_WORKSPACE%\.kwps" rmdir /s /q "%GITHUB_WORKSPACE%\.kwps"
+          if exist "%GITHUB_WORKSPACE%\Build" rmdir /s /q "%GITHUB_WORKSPACE%\Build"
+
+      - name: Authenticate with Klocwork
+        shell: cmd
+        run: |
+          set KWAUTH_NONINTERACTIVE=true
+          "%KLOCWORK_BIN%\kwauth.exe" --url "%KW_URL%" --user "%KW_USER%" --password "%KW_PASS%"
 
       - name: Run Klocwork CLI analysis
         shell: cmd
         run: |
           set PATH=%PATH%;%KLOCWORK_BIN%
-          set KWAUTH_NONINTERACTIVE=true
           cd /d %GITHUB_WORKSPACE%
 
           echo Cleaning previous build...
@@ -94,11 +64,8 @@ jobs:
           if exist %KW_REPORT_DIR% rmdir /s /q %KW_REPORT_DIR%
 
           echo Starting build with kwinject...
-         
-          "%KLOCWORK_BIN%\kwinject.exe" make
 
-          echo Running Klocwork static analysis...
-          cd /d %GITHUB_WORKSPACE%
+          "%KLOCWORK_BIN%\kwinject.exe" make
           "%KLOCWORK_BIN%\kwcheck.exe" create --url %KW_URL%/%KW_PROJECT%
           "%KLOCWORK_BIN%\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
           "%KLOCWORK_BIN%\kwcheck.exe" run -pd .kwlp -b kwinject.out
