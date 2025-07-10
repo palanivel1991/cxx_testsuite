@@ -48,7 +48,7 @@ jobs:
           )
           echo ✅ Secrets are set. Proceeding...
 
-      - name: Authenticate with Klocwork using .kwauth
+      - name: Setup .kwauth file for Klocwork auth
         shell: cmd
         run: |
           setlocal EnableDelayedExpansion
@@ -68,18 +68,18 @@ jobs:
           >> "!KWAUTH_DIR!\.kwauth" echo   ]
           >> "!KWAUTH_DIR!\.kwauth" echo }
 
-          echo ✅ .kwauth file created at !KWAUTH_DIR!\.kwauth
+          echo ✅ .kwauth file created and ready.
 
       - name: Clean previous Klocwork state
         shell: cmd
         run: |
           if exist "%GITHUB_WORKSPACE%\.kwps" rmdir /s /q "%GITHUB_WORKSPACE%\.kwps"
-          if exist "%GITHUB_WORKSPACE%\Build" rmdir /s /q "%GITHUB_WORKSPACE%\Build"
-
+    
       - name: Run Klocwork CLI analysis
         shell: cmd
         run: |
           set PATH=%PATH%;%KLOCWORK_BIN%
+          set KWAUTH_NONINTERACTIVE=true
           cd /d %GITHUB_WORKSPACE%
 
           echo Cleaning previous build...
@@ -97,6 +97,7 @@ jobs:
 
           echo Running Klocwork static analysis...
           cd /d %GITHUB_WORKSPACE%
+
           "%KLOCWORK_BIN%\kwcheck.exe" create --url %KW_URL%/%KW_PROJECT%
           "%KLOCWORK_BIN%\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
           "%KLOCWORK_BIN%\kwcheck.exe" run -pd .kwlp -b kwinject.out
