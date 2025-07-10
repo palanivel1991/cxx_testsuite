@@ -27,13 +27,20 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Print current user
+      - name: Debug: Network connectivity check to Klocwork server
         shell: cmd
-        run: whoami
+        run: |
+          echo ======= IP Configuration =======
+          ipconfig
 
-      - name: Test connectivity to Klocwork server
-        shell: cmd
-        run: curl.exe -v %KW_URL%
+          echo ======= Pinging Klocwork Server =======
+          ping 192.168.0.127 -n 4
+
+          echo ======= CURL Test to 8082 =======
+          curl.exe -v http://192.168.0.127:8082
+
+          echo ======= Test License Port (27000) =======
+          powershell -Command "Test-NetConnection -ComputerName 192.168.0.127 -Port 27000"
 
       - name: Clean previous Klocwork state
         shell: cmd
