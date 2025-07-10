@@ -74,7 +74,7 @@ jobs:
           "%KLOCWORK_BIN%\kwinject.exe" make
 
           echo Running Klocwork static analysis...
-          "%KLOCWORK_BIN%\kwcheck.exe" create --url %KW_URL% --project %KW_PROJECT%
+          "%KLOCWORK_BIN%\kwcheck.exe" create --url %KW_URL%
           "%KLOCWORK_BIN%\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
           "%KLOCWORK_BIN%\kwcheck.exe" run -pd .kwlp -b kwinject.out
           "%KLOCWORK_BIN%\kwcheck.exe" list -y -l -F detailed -pd .kwlp > "%KW_REPORT_NAME%.txt"
