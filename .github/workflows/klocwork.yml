@@ -17,7 +17,9 @@ jobs:
     env:
       KLOCWORK_LTOKEN: C:\Users\palan\.klocwork\ltoken
       KW_URL: http://192.168.0.127:8082
-      KW_PROJECT: cxx_testsuite
+      KW_PROJECT: Demo
+      KW_USER: ${{ secrets.KW_USER }}
+      KW_PASS: ${{ secrets.KW_PASS }}
       KW_REPORT_NAME: cxx_testsuite_report
       KW_REPORT_DIR: reports
       KLOCWORK_BIN: D:\kw_cmd_24.4\bin
@@ -39,6 +41,13 @@ jobs:
         run: |
           if exist "%GITHUB_WORKSPACE%\.kwps" rmdir /s /q "%GITHUB_WORKSPACE%\.kwps"
           if exist "%GITHUB_WORKSPACE%\Build" rmdir /s /q "%GITHUB_WORKSPACE%\Build"
+
+      - name: Authenticate with Klocwork
+        shell: cmd
+        run: |
+          set KWAUTH_NONINTERACTIVE=true
+          "%KLOCWORK_BIN%\kwauth.exe" --url "%KW_URL%" --user "%KW_USER%" --password "%KW_PASS%"
+
       - name: Run Klocwork CLI analysis
         shell: cmd
         run: |
