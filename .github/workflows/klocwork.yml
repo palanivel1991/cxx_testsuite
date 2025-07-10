@@ -29,48 +29,51 @@ jobs:
 
       - name: Print current user
         shell: cmd
-        run: |
-          whoami
+        run: whoami
 
       - name: Test connectivity to Klocwork server
-        shell: pwsh
-        run: |
-          curl.exe -v $env:KW_URL
+        shell: cmd
+        run: curl.exe -v %KW_URL%
 
       - name: Clean previous Klocwork state
-        shell: pwsh
+        shell: cmd
         run: |
-          Remove-Item -Recurse -Force "$env:GITHUB_WORKSPACE\.kwps" -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force "$env:GITHUB_WORKSPACE\Build" -ErrorAction SilentlyContinue
+          if exist "%GITHUB_WORKSPACE%\.kwps" rmdir /s /q "%GITHUB_WORKSPACE%\.kwps"
+          if exist "%GITHUB_WORKSPACE%\Build" rmdir /s /q "%GITHUB_WORKSPACE%\Build"
 
       - name: Authenticate with Klocwork
-        shell: pwsh
+        shell: cmd
         run: |
-          $env:KWAUTH_NONINTERACTIVE = 'true'
-          & "$env:KLOCWORK_BIN\kwauth.exe" --url "$env:KW_URL" --user "$env:KW_USER" --password "$env:KW_PASS"
+          set KWAUTH_NONINTERACTIVE=true
+          "%KLOCWORK_BIN%\kwauth.exe" --url "%KW_URL%" --user "%KW_USER%" --password "%KW_PASS%"
 
       - name: Run Klocwork CLI analysis
-        shell: pwsh
+        shell: cmd
         run: |
-          $env:PATH += ";$env:KLOCWORK_BIN"
-          Set-Location -Path "$env:GITHUB_WORKSPACE"
+          set PATH=%PATH%;%KLOCWORK_BIN%
+          cd /d %GITHUB_WORKSPACE%
 
-          Write-Host "Cleaning previous build..."
-          Remove-Item -Recurse -Force ".kwlp", ".kwps", "Build", "kwinject.out", "$env:KW_REPORT_NAME.txt", "$env:KW_REPORT_NAME.pdf", "$env:KW_REPORT_DIR" -ErrorAction SilentlyContinue
+          echo Cleaning previous build...
+          if exist .kwlp rmdir /s /q .kwlp
+          if exist .kwps rmdir /s /q .kwps
+          if exist Build rmdir /s /q Build
+          if exist kwinject.out del /f /q kwinject.out
+          if exist %KW_REPORT_NAME%.txt del /f /q %KW_REPORT_NAME%.txt
+          if exist %KW_REPORT_NAME%.pdf del /f /q %KW_REPORT_NAME%.pdf
+          if exist %KW_REPORT_DIR% rmdir /s /q %KW_REPORT_DIR%
 
-          Write-Host "Starting build with kwinject..."
-          New-Item -ItemType Directory -Name "Build" -Force | Out-Null
-          Set-Location -Path ".\Build"
+          echo Starting build with kwinject...
+          mkdir Build
+          cd Build
 
-          cmake ..  # if required
-          & "$env:KLOCWORK_BIN\kwinject.exe" -- make  # Replace `make` with actual build command for Windows
+          cmake ..
+          "%KLOCWORK_BIN%\kwinject.exe" -- nmake
 
-          Write-Host "Running Klocwork static analysis..."
-          $env:KLOCWORK_LTOKEN = "C:\Users\palan\.klocwork\ltoken"
+          echo Running Klocwork static analysis...
+          set KLOCWORK_LTOKEN=C:\Users\palan\.klocwork\ltoken
+          cd /d %GITHUB_WORKSPACE%
 
-          Set-Location -Path "$env:GITHUB_WORKSPACE"
-
-          & "$env:KLOCWORK_BIN\kwcheck.exe" create --url $env:KW_URL --project $env:KW_PROJECT
-          & "$env:KLOCWORK_BIN\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
-          & "$env:KLOCWORK_BIN\kwcheck.exe" run -pd .kwlp -b kwinject.out
-          & "$env:KLOCWORK_BIN\kwcheck.exe" list -y -l -F detailed -pd .kwlp > "$env:KW_REPORT_NAME.txt"
+          "%KLOCWORK_BIN%\kwcheck.exe" create --url "%KW_URL%" --project "%KW_PROJECT%"
+          "%KLOCWORK_BIN%\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
+          "%KLOCWORK_BIN%\kwcheck.exe" run -pd .kwlp -b kwinject.out
+          "%KLOCWORK_BIN%\kwcheck.exe" list -y -l -F detailed -pd .kwlp > "%KW_REPORT_NAME%.txt"
