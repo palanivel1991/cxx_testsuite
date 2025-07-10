@@ -49,6 +49,27 @@ jobs:
           )
           echo ✅ Secrets are set. Proceeding...
 
+      - name: Setup .kwauth for Klocwork authentication
+        shell: cmd
+        run: |
+          setlocal EnableDelayedExpansion
+          echo Creating .kwauth file for non-interactive login...
+          set KWAUTH_DIR=%USERPROFILE%\.klocwork
+          if exist "!KWAUTH_DIR!" rmdir /s /q "!KWAUTH_DIR!"
+          mkdir "!KWAUTH_DIR!"
+
+          > "!KWAUTH_DIR!\.kwauth" echo {
+          >> "!KWAUTH_DIR!\.kwauth" echo   "users": [
+          >> "!KWAUTH_DIR!\.kwauth" echo     {
+          >> "!KWAUTH_DIR!\.kwauth" echo       "url": "%KW_URL%",
+          >> "!KWAUTH_DIR!\.kwauth" echo       "user": "%KW_USER%",
+          >> "!KWAUTH_DIR!\.kwauth" echo       "password": "%KW_PASS%"
+          >> "!KWAUTH_DIR!\.kwauth" echo     }
+          >> "!KWAUTH_DIR!\.kwauth" echo   ]
+          >> "!KWAUTH_DIR!\.kwauth" echo }
+
+          echo ✅ .kwauth setup complete.
+
       - name: Clean previous Klocwork state
         shell: cmd
         run: |
@@ -71,10 +92,12 @@ jobs:
           if exist %KW_REPORT_DIR% rmdir /s /q %KW_REPORT_DIR%
 
           echo Starting build with kwinject...
+         
           "%KLOCWORK_BIN%\kwinject.exe" make
 
           echo Running Klocwork static analysis...
-          
+          cd /d %GITHUB_WORKSPACE%
+
           "%KLOCWORK_BIN%\kwcheck.exe" create --url %KW_URL%/%KW_PROJECT%
           "%KLOCWORK_BIN%\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
           "%KLOCWORK_BIN%\kwcheck.exe" run -pd .kwlp -b kwinject.out
