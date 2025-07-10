@@ -1,0 +1,76 @@
+name: Build and Test BACnet Stack
+
+on:      
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  klocwork:
+    runs-on: self-hosted
+
+    name: Run Klocwork Analysis
+
+    env:
+      KW_URL: http://192.168.0.127:8082
+      KW_PROJECT: cxx_testsuite
+      KW_USER: ${{ secrets.KW_USER }}
+      KW_PASS: ${{ secrets.KW_PASS }}
+      KW_REPORT_NAME: cxx_testsuite_report
+      KW_REPORT_DIR: reports
+      KLOCWORK_BIN: D:\kw_cmd_24.4\bin
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Print current user
+        shell: pwsh
+        run: |
+          whoami
+
+      - name: Test connectivity to Klocwork server
+        shell: pwsh
+        run: |
+          curl.exe -v $env:KW_URL
+
+      - name: Clean previous Klocwork state
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force "$env:GITHUB_WORKSPACE\.kwps" -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force "$env:GITHUB_WORKSPACE\Build" -ErrorAction SilentlyContinue
+
+      - name: Authenticate with Klocwork
+        shell: pwsh
+        run: |
+          $env:KWAUTH_NONINTERACTIVE = 'true'
+          & "$env:KLOCWORK_BIN\kwauth.exe" --url "$env:KW_URL" --user "$env:KW_USER" --password "$env:KW_PASS"
+
+      - name: Run Klocwork CLI analysis
+        shell: pwsh
+        run: |
+          $env:PATH += ";$env:KLOCWORK_BIN"
+          Set-Location -Path "$env:GITHUB_WORKSPACE"
+
+          Write-Host "Cleaning previous build..."
+          Remove-Item -Recurse -Force ".kwlp", ".kwps", "Build", "kwinject.out", "$env:KW_REPORT_NAME.txt", "$env:KW_REPORT_NAME.pdf", "$env:KW_REPORT_DIR" -ErrorAction SilentlyContinue
+
+          Write-Host "Starting build with kwinject..."
+          New-Item -ItemType Directory -Name "Build" -Force | Out-Null
+          Set-Location -Path ".\Build"
+
+          cmake ..  # if required
+          & "$env:KLOCWORK_BIN\kwinject.exe" -- make  # Replace `make` with actual build command for Windows
+
+          Write-Host "Running Klocwork static analysis..."
+          $env:KLOCWORK_LTOKEN = "C:\Users\palan\.klocwork\ltoken"
+
+          Set-Location -Path "$env:GITHUB_WORKSPACE"
+
+          & "$env:KLOCWORK_BIN\kwcheck.exe" create --url $env:KW_URL --project $env:KW_PROJECT
+          & "$env:KLOCWORK_BIN\kwcheck.exe" set license.host=192.168.0.127 license.port=27000
+          & "$env:KLOCWORK_BIN\kwcheck.exe" run -pd .kwlp -b kwinject.out
+          & "$env:KLOCWORK_BIN\kwcheck.exe" list -y -l -F detailed -pd .kwlp > "$env:KW_REPORT_NAME.txt"
