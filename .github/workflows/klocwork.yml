@@ -21,7 +21,7 @@ jobs:
       KW_PASS: ${{ secrets.KW_PASS }}
       KW_REPORT_NAME: cxx_testsuite_report
       KW_REPORT_DIR: reports
-      KLOCWORK_LTOKEN: C:\Users\palan\.klocwork\ltoken
+      KLOCWORK_LTOKEN: C:\Users\palan\.klocwork\.kwauth
       KLOCWORK_BIN: D:\kw_cmd_24.4\bin
 
     steps:
