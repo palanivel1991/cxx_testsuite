@@ -64,11 +64,10 @@ jobs:
           if exist %KW_REPORT_DIR% rmdir /s /q %KW_REPORT_DIR%
 
           echo Starting build with kwinject...
-          mkdir Build
-          cd Build
+         
 
           cmake ..
-          "%KLOCWORK_BIN%\kwinject.exe" -- nmake
+          "%KLOCWORK_BIN%\kwinject.exe" make
 
           echo Running Klocwork static analysis...
           set KLOCWORK_LTOKEN=%KLOCWORK_LTOKEN%
