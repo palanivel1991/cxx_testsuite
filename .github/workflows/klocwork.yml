@@ -20,9 +20,9 @@ jobs:
 
       - name: Run SonarQube scanner
         run: |
-          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.projectName=CXX Test Suite -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }}"
+          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.projectName=\"CXX Test Suite\" -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }}"
 
       - name: SonarQube Quality Gate
         if: github.event_name == 'pull_request'
         run: |
-          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true"
+          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.projectName=\"CXX Test Suite\" -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true"
