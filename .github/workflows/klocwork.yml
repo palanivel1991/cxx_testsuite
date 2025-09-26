@@ -13,16 +13,19 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Full clone for proper analysis
 
+      # Step 2: Run SonarQube scanner (CMD-safe for PowerShell)
       - name: Run SonarQube scanner
         run: |
-          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.projectName=\"CXX Test Suite\" -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }}"
+          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=sonar_github -Dsonar.projectName=\"Sonar GitHub\" -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }}" 
 
+      # Step 3: Quality Gate check (runs only for pull requests)
       - name: SonarQube Quality Gate
         if: github.event_name == 'pull_request'
         run: |
-          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.projectName=\"CXX Test Suite\" -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true"
+          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=sonar_github -Dsonar.projectName=\"Sonar GitHub\" -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true"
