@@ -1,4 +1,4 @@
-name: Build and Analyze
+name: Build
 
 on:
   push:
@@ -9,23 +9,22 @@ on:
 
 jobs:
   build:
-    name: Build and Analyze with SonarQube
-    runs-on: self-hosted
-
+    name: Build and analyze
+    runs-on: windows-latest
+    
     steps:
-      # Step 1: Checkout repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full clone for proper analysis
-
-      # Step 2: Run SonarQube scanner (CMD-safe for PowerShell)
-      - name: Run SonarQube scanner
-        run: |
-          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=sonar_github -Dsonar.projectName=\"Sonar GitHub\" -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }}" 
-
-      # Step 3: Quality Gate check (runs only for pull requests)
-      - name: SonarQube Quality Gate
-        if: github.event_name == 'pull_request'
-        run: |
-          cmd /c ""D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=sonar_github -Dsonar.projectName=\"Sonar GitHub\" -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true"
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # If you wish to fail your job when the Quality Gate is red, uncomment the
+      # following lines. This would typically be used to fail a deployment.
+      # We do not recommend to use this in a pull request. Prefer using pull request
+      # decoration instead.
+      # - uses: SonarSource/sonarqube-quality-gate-action@v1
+      #   timeout-minutes: 5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
