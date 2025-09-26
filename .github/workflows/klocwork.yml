@@ -10,28 +10,31 @@ on:
 jobs:
   build:
     name: Build and analyze
-    runs-on: self-hosted  # <-- Important: runs on your machine
+    runs-on: self-hosted  # Runs on your machine with SonarQube installed
 
     steps:
-      # Checkout the repository
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for proper analysis
+          fetch-depth: 0  # Full clone for proper analysis
 
-      # Run SonarQube scanner
-      - name: Run SonarQube scanner
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://localhost:9000  # Self-hosted URL
-          # Optional: specify project key
-          # SONAR_PROJECT_KEY: my_project_key
-          # SONAR_PROJECT_NAME: My Project Name
+      # Step 2: Run SonarQube scanner directly
+      - name: Run SonarQube scanner (Windows)
+        run: |
+          "D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" ^
+            -Dsonar.projectKey=cxx_testsuite ^
+            -Dsonar.projectName="CXX Test Suite" ^
+            -Dsonar.sources=. ^
+            -Dsonar.host.url=http://localhost:9000 ^
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      # Optional: Quality Gate check (uncomment if needed)
-      # - name: SonarQube Quality Gate Check
-      #   uses: SonarSource/sonarqube-quality-gate-action@v1
-      #   timeout-minutes: 5
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # Step 3: Quality Gate check (for pull requests)
+      - name: SonarQube Quality Gate
+        if: github.event_name == 'pull_request'
+        run: |
+          "D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" ^
+            -Dsonar.projectKey=cxx_testsuite ^
+            -Dsonar.host.url=http://localhost:9000 ^
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} ^
+            -Dsonar.qualitygate.wait=true
