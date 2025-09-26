@@ -1,4 +1,4 @@
-name: Build
+name: Build and Analyze
 
 on:
   push:
@@ -9,32 +9,23 @@ on:
 
 jobs:
   build:
-    name: Build and analyze
-    runs-on: self-hosted  # Runs on your machine with SonarQube installed
+    name: Build and Analyze with SonarQube
+    runs-on: self-hosted  # Must be on the same machine as SonarQube
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full clone for proper analysis
 
-      # Step 2: Run SonarQube scanner directly
-      - name: Run SonarQube scanner (Windows)
+      # Step 2: Run SonarScanner (PowerShell compatible)
+      - name: Run SonarQube scanner
         run: |
-          "D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" ^
-            -Dsonar.projectKey=cxx_testsuite ^
-            -Dsonar.projectName="CXX Test Suite" ^
-            -Dsonar.sources=. ^
-            -Dsonar.host.url=http://localhost:9000 ^
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+          "D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.projectName="CXX Test Suite" -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      # Step 3: Quality Gate check (for pull requests)
+      # Step 3: Quality Gate check (runs only for pull requests)
       - name: SonarQube Quality Gate
         if: github.event_name == 'pull_request'
         run: |
-          "D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" ^
-            -Dsonar.projectKey=cxx_testsuite ^
-            -Dsonar.host.url=http://localhost:9000 ^
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} ^
-            -Dsonar.qualitygate.wait=true
+          "D:\Downloads\sonar-scanner-cli-7.2.0.5079-windows-x64\sonar-scanner-7.2.0.5079-windows-x64\bin\sonar-scanner.bat" -Dsonar.projectKey=cxx_testsuite -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true
